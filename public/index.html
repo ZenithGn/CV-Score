@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CV Score Analyzer</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Hệ thống chấm điểm CV</h1>
+    <div class="upload-section">
+      <div class="cv-upload-wrapper" onclick="document.getElementById('cvFile').click()">
+        <input type="file" id="cvFile" accept=".pdf" hidden />
+        <div id="cvBox">
+          <span class="cv-icon"><i class="fas fa-file-pdf"></i></span>
+          <div class="cv-info">
+            <div id="cvName">Vui lòng nhập file vào đây</div>
+            <div id="cvSize"></div>
+          </div>
+          <div class="cv-remove" onclick="removeFile(event)">✕</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="majorSelect">Chọn ngành nghề:</label>
+        <select id="majorSelect" required>
+          <option value="">Chọn ngành</option>
+          <option value="IT">Công nghệ thông tin</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Accounting">Kế toán</option>
+          <option value="Finance">Tài chính</option>
+          <option value="HumanResources">Nhân sự</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="positionSelect">Chọn vị trí ứng tuyển:</label>
+        <select id="positionSelect" required>
+          <option value="">Chọn vị trí</option>
+        </select>
+      </div>
+      <button id="analyzeBtn" class="analyze-btn" disabled>Chấm điểm CV</button>
+    </div>
+    <div class="score-display" id="resultsSection" style="display: none;">
+      <h2>Điểm tổng thể: <span id="compositeScore">0</span>/10</h2>
+      <div class="score-card-grid">
+        <div class="score-card">
+          <div class="card-icon"><i class="fas fa-lightbulb"></i></div>
+          <div class="card-content">
+            <h4>Kỹ năng phù hợp</h4>
+            <p><span id="matchScore">0</span>/10</p>
+          </div>
+        </div>
+        <div class="score-card">
+          <div class="card-icon"><i class="fas fa-briefcase"></i></div>
+          <div class="card-content">
+            <h4>Kinh nghiệm</h4>
+            <p><span id="expScore">0</span>/10</p>
+          </div>
+        </div>
+        <div class="score-card">
+          <div class="card-icon"><i class="fas fa-graduation-cap"></i></div>
+          <div class="card-content">
+            <h4>Tốt nghiệp</h4>
+            <p><span id="gradScore">–</span></p>
+          </div>
+        </div>
+        <div class="score-card">
+          <div class="card-icon"><i class="fas fa-trophy"></i></div>
+          <div class="card-content">
+            <h4>Thành tích</h4>
+            <p><span id="achieveScore">–</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="score-comment-box">
+        <h4 id="scoreComment">Đây là nhận xét về CV</h4>
+        <p id="feedback">Đây là phản hồi về CV</p>
+      </div>
+    </div>
+  </div>
+<script>
+const fileInput = document.getElementById('cvFile');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const majorSelect = document.getElementById('majorSelect');
+const positionSelect = document.getElementById('positionSelect');
+const cvName = document.getElementById('cvName');
+const cvSize = document.getElementById('cvSize');
+const cvRemove = document.querySelector('.cv-remove');
+const resultsSection = document.getElementById('resultsSection');
+
+const positionOptions = {
+  IT: ['backend', 'frontend', 'mobile'],
+  Marketing: ['marketing', 'digital marketing specialist', 'brand manager'],
+  Accounting: ['accounting', 'general accountant', 'cost accountant'],
+  Finance: ['finance', 'financial analyst', 'investment analyst'],
+  HumanResources: ['human resources', 'recruitment specialist', 'hr generalist']
+};
+
+fileInput.addEventListener('change', () => {
+  const file = fileInput.files[0];
+  analyzeBtn.disabled = !file || !majorSelect.value || !positionSelect.value;
+  if (file) {
+    cvName.innerText = file.name;
+    cvSize.innerText = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+    cvRemove.style.display = 'block';
+  } else {
+    cvName.innerText = 'Vui lòng nhập file vào đây';
+    cvSize.innerText = '';
+    cvRemove.style.display = 'none';
+  }
+});
+majorSelect.addEventListener('change', () => {
+  const selectedMajor = majorSelect.value;
+  positionSelect.innerHTML = '<option value="">Chọn vị trí</option>';
+  if (positionOptions[selectedMajor]) {
+    positionOptions[selectedMajor].forEach(pos => {
+      const opt = document.createElement('option');
+      opt.value = pos;
+      opt.textContent = pos.charAt(0).toUpperCase() + pos.slice(1).replace(/([A-Z])/g, ' $1');
+      positionSelect.appendChild(opt);
+    });
+  }
+  analyzeBtn.disabled = !fileInput.files[0] || !selectedMajor || !positionSelect.value;
+});
+positionSelect.addEventListener('change', () => {
+  analyzeBtn.disabled = !fileInput.files[0] || !majorSelect.value || !positionSelect.value;
+});
+cvRemove.addEventListener('click', (e) => {
+  e.stopPropagation();
+  fileInput.value = '';
+  cvName.innerText = 'Vui lòng nhập file vào đây';
+  cvSize.innerText = '';
+  cvRemove.style.display = 'none';
+  analyzeBtn.disabled = true;
+});
+
+analyzeBtn.onclick = async function() {
+  const file = fileInput.files[0];
+  const major = majorSelect.value;
+  const position = positionSelect.value;
+  if (!file || !major || !position) return alert("Chọn đủ thông tin!");
+
+  const formData = new FormData();
+  formData.append("cvFile", file);
+  formData.append("major", major);
+  formData.append("position", position);
+
+  document.getElementById("feedback").innerText = "Đang chấm điểm...";
+  document.getElementById("scoreComment").innerText = "Đang phân tích...";
+
+  fetch("/api/analyze", { method: "POST", body: formData })
+    .then(r => r.json())
+    .then(data => {
+      const kq = data.analyze;
+      document.getElementById("compositeScore").innerText = kq.compositeScore;
+      document.getElementById("matchScore").innerText = kq.skillScore;
+      document.getElementById("expScore").innerText = kq.experienceScore;
+      document.getElementById("gradScore").innerText = kq.graduationScore;
+      document.getElementById("achieveScore").innerText = kq.achievementScore;
+      document.getElementById("scoreComment").innerText = kq.comment;
+      document.getElementById("feedback").innerText = data.aiComment;
+      resultsSection.style.display = "block";
+    })
+    .catch(e => {
+      document.getElementById("feedback").innerText = "Có lỗi xảy ra: " + e;
+    });
+};
+</script>
+</body>
+</html>
