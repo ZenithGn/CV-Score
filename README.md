@@ -73,7 +73,7 @@ npm install pdfjs-dist
 ├── package.json
 ├── package-lock.json
 ```
-![image1](image1)
+
 
 **Giải thích:**
 - **public/**: Chứa toàn bộ tài nguyên phía frontend (HTML, CSS, JS, ảnh,...). Express sẽ cấu hình để phục vụ tĩnh từ thư mục này.
